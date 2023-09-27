@@ -1,39 +1,34 @@
-
 import sqlite3 as sql
-conn = sql.connect('database.db')
-def insert_table(table,row):
+
+def get_columns_and_insert_data(table):
     try:
         with sql.connect("database.db") as con:
             cur = con.cursor()
-            cur.execute(f"INSERT INTO {table} {tuple(row.keys())} VALUES ({','.join('?' for _ in range(len(row)))})",(tuple(row.values()) ))
+            
+            # Get column names for the specified table
+            cur.execute(f"PRAGMA table_info({table})")
+            columns = cur.fetchall()
+            column_names = [column[1] for column in columns]
+            
+            # Initialize a dictionary to store user input data
+            data = {}
+            
+            # Prompt the user to enter values for each column
+            for column_name in column_names:
+                value = input(f"Enter value for {column_name}: ")
+                data[column_name] = value
+            
+            # Insert the data into the specified table
+            cur.execute(f"INSERT INTO {table} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})", tuple(data.values()))
             con.commit()
+            
             msg = "Record successfully added"
             print(msg)
-    except:
+    except Exception as e:
         con.rollback()
-        msg = "error in insert operation"
+        msg = f"Error in insert operation: {str(e)}"
+        print(msg)
 
-    finally:
-        con.close()
-
-
-def get_columns(table):
-
-    """have to look """
-    try:
-        with sql.connect("database.db") as con:
-            cur = con.cursor()
-            columns=cur.execute(f"select column_name from information_schema.columns where table_name = {table};")
-            print(columns)
-    except:
-        print("error")
-# d={
-# 'name' : "harish",
-# 'addr' : "a;dsfa",
-# 'city' : "ajlhfbafdaj ",
-# 'pin' : "faljfbd",
-# }
-# insert_table('students',d)
-
-# get_columns('students')
-
+# Prompt the user to enter the table name
+table_name = input("Enter the table name: ")
+get_columns_and_insert_data(table_name)
